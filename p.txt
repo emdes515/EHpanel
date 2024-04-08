@@ -1,0 +1,458 @@
+/*
+function drzewoZlecen($arg) {
+	GLOBAL $conn;
+	$dane = array();
+	$i=0;
+	$sql=$conn->prepare("SELECT id, idRodzica, idDziecka, nazwa FROM drzewoWersjiZlecenia WHERE zlecenia_idZlecenia=:idZlecenia");
+	$sql->bindValue(':idZlecenia', $arg["idZlecenia"], PDO::PARAM_INT);
+	$res=dbQuery($sql);
+	while($row=$res["wynik"]->fetch(PDO::FETCH_ASSOC))
+	{
+		$tmp=array();
+		$tmp["id"] = $row["idDziecka"];
+		$tmp["parentid"] = $row["idRodzica"];
+		$tmp["value"] = $row["id"];
+		$tmp["text"] = $row["nazwa"];
+		$dane[$i] = $tmp;
+		$i++;
+	}
+	return $dane;
+}
+function spisCzynnosci($arg)
+{
+	GLOBAL $conn;
+	$dane = array();
+	$i=0;
+	$sql=$conn->prepare("SELECT idCzynnosci, id, opis, dataPoczatek, dataKoniec, IF((CURRENT_DATE()>=dataPoczatek AND CURRENT_DATE()<=dataKoniec) OR dataPoczatek='0000-00-00',1,0) AS wlaczone 
+						FROM czynnosci WHERE drzewoWersjiZlecenia_id=:idDrzewa AND zamkniete=0 ORDER BY CAST(id AS UNSIGNED) ASC");
+	$sql->bindValue(':idDrzewa', $arg["idDrzewa"], PDO::PARAM_INT);
+	$res=dbQuery($sql);
+	while($row=$res["wynik"]->fetch(PDO::FETCH_ASSOC))
+	{
+		$tmp=array();
+		$tmp["idCzynnosci"] = $row["idCzynnosci"];
+		$tmp["nazwa"] = $row["id"]." - ".$row["opis"];
+		$tmp["wlaczone"] = $row["wlaczone"];
+		$dane[$i] = $tmp;
+		$i++;
+	}
+	return $dane;
+}
+function daneFormularz($arg)
+{
+	GLOBAL $conn;
+	$dane = array();
+	$sql=$conn->prepare("SELECT * FROM czasPracy WHERE idCzasuPracy=:idCzasuPracy");
+	$sql->bindValue(':idCzasuPracy', $arg["idCzasuPracy"], PDO::PARAM_INT);
+	$res=dbQuery($sql);
+	$row=$res["wynik"]->fetch(PDO::FETCH_ASSOC);
+	$dane["idPracownika"] = $row["idPracownika"];
+	$dane["idCzasuPracy"] = $row["idCzasuPracy"];
+	$dane["idZlecenia"] = $row["idZlecenia"];
+	$dane["idCzynnosci"] = $row["idCzynnosci"];
+	$dane["data"] = $row["data"];
+	$dane["godziny"] = $row["godziny"];
+	$dane["urlop"] = $row["urlop"];
+	$dane["praceDlaSerwisu"] = $row["praceDlaSerwisu"];
+	if ($row["skladnikPlac"]&1)
+		$dane["zmiana"]=1; //zmiana A/B
+	elseif ($row["skladnikPlac"]&2)
+		$dane["zmiana"]=2; //zmiana C
+	if ($row["skladnikPlac"]&4) //nadgodziny
+		$dane["nadgodziny"]= 1;
+	else
+		$dane["nadgodziny"]= 0;
+	if ($row["skladnikPlac"]&8) //zjazd
+		$dane["zjazd"] = 1;
+	else
+		$dane["zjazd"] = 0;
+	$dane["uwagi"] = $row["uwagi"];
+	$dane["zatwierdzony"] = $row["zatwierdzony"];
+	$dane["idDziecka"] = 0;
+	$sql=$conn->prepare("SELECT dwz.idDziecka FROM czynnosci AS cz JOIN drzewoWersjiZlecenia AS dwz ON cz.drzewoWersjiZlecenia_id=dwz.id WHERE cz.idCzynnosci=:idCzynnosci");
+	$sql->bindValue(':idCzynnosci', $row["idCzynnosci"], PDO::PARAM_INT);
+	$res=dbQuery($sql);
+	$row=$res["wynik"]->fetch(PDO::FETCH_ASSOC);
+	$dane["idDziecka"] = $row["idDziecka"];
+	return $dane;
+}
+
+function zapisz($arg)
+{
+	GLOBAL $conn;
+	$dane = array();
+	if ($arg["idCzasuPracy"]==0)
+	{
+		if ($arg["urlop"]==1)
+		{
+			$sql = $conn->prepare("INSERT INTO czasPracy VALUES (NULL, NULL, NULL, :idPracownika, :data, :godziny, 1, :uwagi, :zatwierdzony, 0,
+			:urlop, 0, NOW(), NULL, NULL, NULL, :tworzacy, NULL, :zatwierdzajacy, NULL, NULL,'')");
+			$sql->bindValue(":idPracownika", $arg["idPracownika"], PDO::PARAM_INT);
+			$sql->bindValue(":data", $arg["data"], PDO::PARAM_STR);
+			$sql->bindValue(":godziny", str_replace(",",".",$arg["godziny"]), PDO::PARAM_STR);
+//			$sql->bindValue(":godziny", "8", PDO::PARAM_STR);
+			$sql->bindValue(":uwagi", $arg["uwagi"], PDO::PARAM_STR);
+			$sql->bindValue(":urlop", $arg["urlop"], PDO::PARAM_STR);
+			$sql->bindValue(":zatwierdzony", $arg["zatwierdzony"], PDO::PARAM_INT);
+			if ($arg["zatwierdzony"]==1)
+				$sql->bindValue(':zatwierdzajacy', nazwaPracownika(idPracownika()), PDO::PARAM_STR);
+			else
+				$sql->bindValue(':zatwierdzajacy', "", PDO::PARAM_STR);
+			$sql->bindValue(":tworzacy", nazwaPracownika(idPracownika()), PDO::PARAM_STR);
+			$res=dbQuery($sql);
+			$idCzasuPracy = $conn->lastInsertId();
+		}
+		else
+		{
+			//sprawdzenie czy nie ma dwóch tych samych raportów z różnymi godzinami
+			$sql = $conn->prepare("SELECT * FROM czasPracy WHERE idCzynnosci=:idCzynnosci AND idZlecenia=:idZlecenia AND idPracownika=:idPracownika AND
+			data=:data AND godziny=:godziny AND skladnikPlac=:skladnikPlac AND uwagi=:uwagi	AND urlop=:urlop AND praceDlaSerwisu=:praceDlaSerwisu AND 
+			tworzacy=:tworzacy");
+			$sql->bindValue(":idCzynnosci", $arg["idCzynnosci"], PDO::PARAM_INT);
+			$sql->bindValue(":idZlecenia", $arg["idZlecenia"], PDO::PARAM_INT);
+			$sql->bindValue(":idPracownika", $arg["idPracownika"], PDO::PARAM_INT);
+			$sql->bindValue(":data", $arg["data"], PDO::PARAM_STR);
+			$sql->bindValue(":godziny", str_replace(",",".",$arg["godziny"]), PDO::PARAM_STR);
+			$sql->bindValue(":skladnikPlac", $arg["skladnikPlac"], PDO::PARAM_STR);
+			$sql->bindValue(":uwagi", $arg["uwagi"], PDO::PARAM_STR);
+			$sql->bindValue(":urlop", $arg["urlop"], PDO::PARAM_STR);
+			$sql->bindValue(":praceDlaSerwisu", $arg["praceDlaSerwisu"], PDO::PARAM_STR);
+			$sql->bindValue(":tworzacy", nazwaPracownika(idPracownika()), PDO::PARAM_STR);
+			$res=dbQuery($sql);
+			if ($sql->rowCount()==0)
+			{
+				$sql = $conn->prepare("INSERT INTO czasPracy VALUES (NULL, :idCzynnosci, :idZlecenia, :idPracownika, :data, :godziny, :skladnikPlac, :uwagi,
+				:zatwierdzony, 0, :urlop, :praceDlaSerwisu, NOW(), NULL, NULL, NULL, :tworzacy, NULL, :zatwierdzajacy, NULL, NULL,'')");
+				$sql->bindValue(":idCzynnosci", $arg["idCzynnosci"], PDO::PARAM_INT);
+				$sql->bindValue(":idZlecenia", $arg["idZlecenia"], PDO::PARAM_INT);
+				$sql->bindValue(":idPracownika", $arg["idPracownika"], PDO::PARAM_INT);
+				$sql->bindValue(":data", $arg["data"], PDO::PARAM_STR);
+				$sql->bindValue(":godziny", str_replace(",",".",$arg["godziny"]), PDO::PARAM_STR);
+				$sql->bindValue(":skladnikPlac", $arg["skladnikPlac"], PDO::PARAM_STR);
+				$sql->bindValue(":uwagi", $arg["uwagi"], PDO::PARAM_STR);
+				$sql->bindValue(":urlop", $arg["urlop"], PDO::PARAM_STR);
+				$sql->bindValue(":zatwierdzony", $arg["zatwierdzony"], PDO::PARAM_INT);
+				if ($arg["zatwierdzony"]==1)
+					$sql->bindValue(':zatwierdzajacy', nazwaPracownika(idPracownika()), PDO::PARAM_STR);
+				else
+					$sql->bindValue(':zatwierdzajacy', "", PDO::PARAM_STR);
+				$sql->bindValue(":praceDlaSerwisu", $arg["praceDlaSerwisu"], PDO::PARAM_STR);
+				$sql->bindValue(":tworzacy", nazwaPracownika(idPracownika()), PDO::PARAM_STR);
+				$res=dbQuery($sql);
+				echo $res["blad"];
+				$idCzasuPracy = $conn->lastInsertId();
+			}
+			else
+				$idCzasuPracy=1;
+		}
+	}
+	else
+	{
+		if ($arg["urlop"]==1)
+		{
+			$sql = $conn->prepare("UPDATE czasPracy SET idCzynnosci=NULL, idZlecenia=NULL, idPracownika=:idPracownika,
+			data=:data, godziny=8, skladnikPlac=1, uwagi=:uwagi, zatwierdzony=:zatwierdzony, urlop=:urlop, praceDlaSerwisu=0,
+			dataModyfikacji=NOW(), modyfikujacy=:modyfikujacy, zatwierdzajacy=:zatwierdzajacy
+			WHERE idCzasuPracy=:idCzasuPracy");
+			$sql->bindValue(":idCzasuPracy", $arg["idCzasuPracy"], PDO::PARAM_INT);
+			$sql->bindValue(":idPracownika", $arg["idPracownika"], PDO::PARAM_INT);
+			$sql->bindValue(":data", $arg["data"], PDO::PARAM_STR);
+			$sql->bindValue(":uwagi", $arg["uwagi"], PDO::PARAM_STR);
+			$sql->bindValue(":zatwierdzony", $arg["zatwierdzony"], PDO::PARAM_INT);
+			if ($arg["zatwierdzony"]==1)
+				$sql->bindValue(':zatwierdzajacy', nazwaPracownika(idPracownika()), PDO::PARAM_STR);
+			else
+				$sql->bindValue(':zatwierdzajacy', "", PDO::PARAM_STR);
+			$sql->bindValue(":urlop", $arg["urlop"], PDO::PARAM_STR);
+			$sql->bindValue(":modyfikujacy", nazwaPracownika(idPracownika()), PDO::PARAM_STR);
+		}
+		else
+		{
+			$sql = $conn->prepare("UPDATE czasPracy SET idCzynnosci=:idCzynnosci, idZlecenia=:idZlecenia, idPracownika=:idPracownika,
+			data=:data, godziny=:godziny, skladnikPlac=:skladnikPlac, uwagi=:uwagi, zatwierdzony=:zatwierdzony, urlop=:urlop, praceDlaSerwisu=:praceDlaSerwisu,
+			dataModyfikacji=NOW(), modyfikujacy=:modyfikujacy, zatwierdzajacy=:zatwierdzajacy
+			WHERE idCzasuPracy=:idCzasuPracy");
+			$sql->bindValue(":idCzasuPracy", $arg["idCzasuPracy"], PDO::PARAM_INT);
+			$sql->bindValue(":idCzynnosci", $arg["idCzynnosci"], PDO::PARAM_INT);
+			$sql->bindValue(":idZlecenia", $arg["idZlecenia"], PDO::PARAM_INT);
+			$sql->bindValue(":idPracownika", $arg["idPracownika"], PDO::PARAM_INT);
+			$sql->bindValue(":data", $arg["data"], PDO::PARAM_STR);
+			$sql->bindValue(":godziny", str_replace(",",".",$arg["godziny"]), PDO::PARAM_STR);
+			$sql->bindValue(":skladnikPlac", $arg["skladnikPlac"], PDO::PARAM_STR);
+			$sql->bindValue(":zatwierdzony", $arg["zatwierdzony"], PDO::PARAM_INT);
+			if ($arg["zatwierdzony"]==1)
+				$sql->bindValue(':zatwierdzajacy', nazwaPracownika(idPracownika()), PDO::PARAM_STR);
+			else
+				$sql->bindValue(':zatwierdzajacy', "", PDO::PARAM_STR);
+			$sql->bindValue(":uwagi", $arg["uwagi"], PDO::PARAM_STR);
+			$sql->bindValue(":urlop", $arg["urlop"], PDO::PARAM_STR);
+			$sql->bindValue(":praceDlaSerwisu", $arg["praceDlaSerwisu"], PDO::PARAM_STR);
+			$sql->bindValue(":modyfikujacy", nazwaPracownika(idPracownika()), PDO::PARAM_STR);
+		}
+		$res=dbQuery($sql);
+//		echo $res["blad"];
+		$idCzasuPracy=$arg["idCzasuPracy"];
+	}
+	$dane["id"]=$idCzasuPracy;
+	return $dane;
+}
+function usun($arg)
+{
+	GLOBAL $conn;
+	$dane = array();
+	$sql = $conn->prepare("DELETE FROM czasPracy WHERE idCzasuPracy=:idCzasuPracy");
+	$sql->bindValue(':idCzasuPracy', $arg["idCzasuPracy"], PDO::PARAM_INT);
+	$res=dbQuery($sql);
+	if($res["blad"])
+	{
+		$ilosc=0;
+	}
+	else
+	{
+		$ilosc = $sql->rowCount();
+	}
+	$dane["id"]=$ilosc;
+	return $dane;
+}
+
+function duplikacjaRaportu($arg)
+{
+	GLOBAL $conn;
+	$dane = array();
+	$dane["id"]=$idCzasuPracy;
+	$sql = $conn->prepare("SELECT * FROM czasPracy WHERE idCzasuPracy=:idCzasuPracy");
+	$sql->bindValue(':idCzasuPracy', $arg["idCzasuPracy"], PDO::PARAM_INT);
+	$res=dbQuery($sql);
+	$row=$res["wynik"]->fetch(PDO::FETCH_ASSOC);
+	if (czyZlecenieZamkniete($row["idZlecenia"])) {
+		$dane["id"]=-1;
+	}
+	else {
+		$sql = $conn->prepare("INSERT INTO czasPracy VALUES (NULL, :idCzynnosci, :idZlecenia, :idPracownika, :data, :godziny, :skladnikPlac, :uwagi, 0, 0,
+		:urlop, :praceDlaSerwisu, NOW(), NULL, NULL, NULL, :tworzacy, NULL, NULL, NULL, NULL,'')");
+		$sql->bindValue(":idCzynnosci", $row["idCzynnosci"], PDO::PARAM_INT);
+		$sql->bindValue(":idZlecenia", $row["idZlecenia"], PDO::PARAM_INT);
+		$sql->bindValue(":idPracownika", $row["idPracownika"], PDO::PARAM_INT);
+		$dt = date("N",strtotime($row["data"]));
+		$data = date_create($row["data"]);
+		if ($dt > 4)
+			date_add($data,date_interval_create_from_date_string((8-$dt)." days"));
+		else
+			date_add($data,date_interval_create_from_date_string("1 days"));
+		$sql->bindValue(":data", date_format($data,"Y-m-d"), PDO::PARAM_STR);
+		$sql->bindValue(":godziny", $row["godziny"], PDO::PARAM_STR);
+		$sql->bindValue(":skladnikPlac", $row["skladnikPlac"], PDO::PARAM_STR);
+		$sql->bindValue(":uwagi", $row["uwagi"], PDO::PARAM_STR);
+		$sql->bindValue(":urlop", $row["urlop"], PDO::PARAM_STR);
+		$sql->bindValue(":praceDlaSerwisu", $row["praceDlaSerwisu"], PDO::PARAM_STR);
+		$sql->bindValue(":tworzacy", nazwaPracownika(idPracownika()), PDO::PARAM_STR);
+		$res=dbQuery($sql);
+		$dane["id"] = $conn->lastInsertId();
+	}
+	return $dane;
+}
+function czyZlecenieZamkniete($idZlecenia)
+{
+	GLOBAL $conn;
+	$sql = $conn->prepare("SELECT * FROM zlecenia WHERE idZlecenia=:idZlecenia");
+	$sql->bindValue(':idZlecenia', $idZlecenia, PDO::PARAM_INT);
+	$res=dbQuery($sql);
+	$row=$res["wynik"]->fetch(PDO::FETCH_ASSOC);
+	if ($row["zamkniete"]==1)
+		return true;
+	else
+		return false;
+}
+function ustawDateFiltrowania($arg)
+{
+	$dane = array();
+	$_SESSION["rcp"]["dataFiltrowania"]=$arg["data"];
+	return $dane;
+}
+function przekroczenieGodzinNaCzynnosci($arg)
+{
+	GLOBAL $conn;
+	$dane = array();
+	$dane["godzinyPlanowane"] = 0;
+	$dane["sumaZaraportowanychGodzin"] = 0;
+	$sql = $conn->prepare("SELECT czynnosci.godzinyPlanowane , sum(ifnull(czasPracy.godziny,0))  AS sumaZaraportowanychGodzin 
+		FROM czasPracy RIGHT JOIN czynnosci ON czasPracy.idCzynnosci=czynnosci.idCzynnosci 
+		WHERE czynnosci.idCzynnosci=:idCzynnosci AND czynnosci.godzinyPlanowane is not null and czynnosci.godzinyPlanowane>0
+		GROUP BY czynnosci.godzinyPlanowane"); 
+	$sql->bindValue(':idCzynnosci', $arg["idCzynnosci"], PDO::PARAM_INT);
+	$res=dbQuery($sql);
+	if ($sql->rowCount()>0) {
+		$row=$res["wynik"]->fetch(PDO::FETCH_ASSOC);
+		$dane["godzinyPlanowane"] = $row["godzinyPlanowane"];
+		$dane["sumaZaraportowanychGodzin"] = $row["sumaZaraportowanychGodzin"];
+	}
+	return $dane;
+}
+function qrDaneZlecenia($arg)
+{
+	GLOBAL $conn;
+	$dane = array();
+	$sql = $conn->prepare("SELECT zlecenia.idZlecenia, concat(zlecenia.nrIFS, ' - ', zlecenia.temat) AS nazwaZlecenia, drzewoWersjiZlecenia.nazwa AS nazwaDrzewaZlecenia, czynnosci.idCzynnosci, czynnosci.opis AS opisCzynnosci, zlecenia.zamkniete AS zlecenieZamkniete, czynnosci.zamkniete AS czynnoscZamknieta
+	FROM zlecenia JOIN drzewoWersjiZlecenia ON zlecenia.idZlecenia = drzewoWersjiZlecenia.zlecenia_idZlecenia JOIN czynnosci ON drzewoWersjiZlecenia.id = czynnosci.drzewoWersjiZlecenia_id
+	WHERE czynnosci.idCzynnosci=:idCzynnosci"); 
+	$sql->bindValue(':idCzynnosci', $arg["idCzynnosci"], PDO::PARAM_INT);
+	$res=dbQuery($sql);
+	if ($sql->rowCount()>0) {
+		$row=$res["wynik"]->fetch(PDO::FETCH_ASSOC);
+		if ($row["zlecenieZamkniete"] == 1) {
+			$dane["blad"] = "qrZlecenieZamkniete";
+		} else if ($row["czynnoscZamknieta"] == 1) {
+			$dane["blad"] = "qrCzynnoscZamknieta";
+		} else {
+			$dane["idZlecenia"] = $row["idZlecenia"];
+			$dane["nazwaZlecenia"] = $row["nazwaZlecenia"];
+			$dane["nazwaDrzewaZlecenia"] = $row["nazwaDrzewaZlecenia"];
+			$dane["idCzynnosci"] = $row["idCzynnosci"];
+			$dane["opisCzynnosci"] = $row["opisCzynnosci"];
+			$dane["godzinyPlanowane"] = 0;
+			$dane["sumaZaraportowanychGodzin"] = 0;
+			$sql = $conn->prepare("SELECT czynnosci.godzinyPlanowane , sum(ifnull(czasPracy.godziny,0))  AS sumaZaraportowanychGodzin 
+				FROM czasPracy RIGHT JOIN czynnosci ON czasPracy.idCzynnosci=czynnosci.idCzynnosci 
+				WHERE czynnosci.idCzynnosci=:idCzynnosci AND czynnosci.godzinyPlanowane is not null and czynnosci.godzinyPlanowane>0
+				GROUP BY czynnosci.godzinyPlanowane"); 
+			$sql->bindValue(':idCzynnosci', $dane["idCzynnosci"], PDO::PARAM_INT);
+			$res=dbQuery($sql);
+			if ($sql->rowCount()>0) {
+				$row=$res["wynik"]->fetch(PDO::FETCH_ASSOC);
+				$dane["godzinyPlanowane"] = $row["godzinyPlanowane"];
+				$dane["sumaZaraportowanychGodzin"] = $row["sumaZaraportowanychGodzin"];
+			}
+		}
+	}
+	else {
+		$dane["blad"] = "qrZlecenieBrak";
+	}
+	return $dane;
+
+}
+*/
+
+
+--------pracownicy----------
+
+function pracownicy($arg)
+{
+	if (function_exists($arg["funkcja"]))
+		return $arg["funkcja"]($arg);
+	else
+	{
+		die('Moduł: '.$arg['modul'].'<br>Brak funkcji: '.$arg["funkcja"]);
+	}
+}
+function lista($arg)
+{
+	GLOBAL $conn;
+	$dane = array();
+	$i=0;
+	$sql = $conn->prepare("SELECT idPracownika, imie, nazwisko, sambaLogin FROM pracownicy ORDER BY nazwisko ASC, imie ASC");
+	$res=dbQuery($sql);
+	while($row=$res["wynik"]->fetch(PDO::FETCH_ASSOC))
+	{
+		$tmp=array();
+		$tmp["idPracownika"] = $row["idPracownika"];
+		if (($row["imie"]=="") AND ($row["nazwisko"]==""))
+			$tmp["nazwiskoImie"]=$row["sambaLogin"];
+		else
+			$tmp["nazwiskoImie"]=$row["nazwisko"]." ".$row["imie"];
+		$dane[$i] = $tmp;
+		$i++;
+	}
+	return $dane;
+}
+function formularz($arg)
+{
+	GLOBAL $conn;
+	$dane = array();
+	$dane["dzial"]=array();
+	$i=0;
+	$sql = $conn->prepare("SELECT * FROM pracownicy WHERE idPracownika=:idPracownika");
+	$sql->bindValue(':idPracownika', $arg["idPracownika"], PDO::PARAM_INT);
+	$res=dbQuery($sql);
+	$row=$res["wynik"]->fetch(PDO::FETCH_ASSOC);
+	$dane["imie"] = $row["imie"];
+	$dane["nazwisko"] = $row["nazwisko"];
+	$dane["proxNetId"] = $row["proxNetId"];
+	$dane["nrIFS"] = $row["nrIFS"];
+	$dane["sambaLogin"] = $row["sambaLogin"];
+	$dane["email"] = $row["email"];
+	$dane["emailEH"] = $row["emailEH"];
+	$dane["wyslacPasek"] = $row["wyslacPasek"];
+	$dane["wyslacPowiadomieniaZleceniaWewnetrznego"] = $row["wyslacPowiadomieniaZleceniaWewnetrznego"];
+	$dane["etat"] = $row["etat"];
+	$dane["kierownik"] = $row["kierownik"];
+	$dane["widoczny"] = $row["widoczny"];
+	$sql = $conn->prepare("SELECT * FROM dzialy_has_pracownicy WHERE idPracownika=:idPracownika");
+	$sql->bindValue(':idPracownika', $arg["idPracownika"], PDO::PARAM_INT);
+	$res=dbQuery($sql);
+	while($row=$res["wynik"]->fetch(PDO::FETCH_ASSOC))
+	{
+		$tmp=array();
+		$tmp["idDzialu"]=$row["idDzialu"];
+		$tmp["dzialPodstawowy"]=$row["dzialPodstawowy"];
+		$dane["dzial"][$i] = $tmp;
+		$i++;
+	}
+	return $dane;
+}
+function zapisz($arg)
+{
+	GLOBAL $conn;
+	$dane = array();
+	$blad = false;
+	if ($arg["email"]=="")
+		$arg["wyslacPasek"] = 0;
+//	echo "UPDATE pracownicy SET proxNetId=".$arg["proxNetId"].", nrIFS=".$arg["nrIFS"].", imie=".$arg["imie"].", nazwisko=".$arg["nazwisko"].", sambaLogin=".$arg["sambaLogin"].", email=".$arg["email"].", etat=".$arg["etat"].", kierownik=".$arg["kierownik"].", widoczny=".$arg["widoczny"].", wyslacPasek=".$arg["wyslacPasek"].", emailEH=".$arg["emailEH"]." WHERE idPracownika=".$arg["idPracownika"]."";
+	$sql = $conn->prepare("UPDATE pracownicy SET proxNetId=:proxNetId, nrIFS=:nrIFS, imie=:imie, nazwisko=:nazwisko, sambaLogin=:sambaLogin, email=:email, etat=:etat, kierownik=:kierownik, widoczny=:widoczny, wyslacPasek=:wyslacPasek, emailEH=:emailEH, wyslacPowiadomieniaZleceniaWewnetrznego=:wyslacPowiadomieniaZleceniaWewnetrznego WHERE idPracownika=:idPracownika");
+	$sql->bindValue(":idPracownika", $arg["idPracownika"], PDO::PARAM_INT);
+	$sql->bindValue(":proxNetId", $arg["proxNetId"], PDO::PARAM_STR);
+	if (trim($arg["nrIFS"])=="") $arg["nrIFS"]=null;
+	$sql->bindValue(":nrIFS", $arg["nrIFS"], PDO::PARAM_STR);
+	$sql->bindValue(":imie", $arg["imie"], PDO::PARAM_STR);
+	$sql->bindValue(":nazwisko", $arg["nazwisko"], PDO::PARAM_STR);
+	$sql->bindValue(":sambaLogin", $arg["sambaLogin"], PDO::PARAM_STR);
+	$sql->bindValue(":email", $arg["email"], PDO::PARAM_STR);
+	$sql->bindValue(":wyslacPasek", $arg["wyslacPasek"], PDO::PARAM_INT);
+	$sql->bindValue(":etat", str_replace(",",".",$arg["etat"]), PDO::PARAM_STR);
+	$sql->bindValue(":kierownik", $arg["kierownik"], PDO::PARAM_INT);
+	$sql->bindValue(":widoczny", $arg["widoczny"], PDO::PARAM_INT);
+	$sql->bindValue(":emailEH", $arg["emailEH"], PDO::PARAM_STR);
+	$sql->bindValue(":wyslacPowiadomieniaZleceniaWewnetrznego", $arg["wyslacPowiadomieniaZleceniaWewnetrznego"], PDO::PARAM_STR);
+	$res=dbQuery($sql);
+	echo $res["blad"];
+	if($res["blad"]) $blad = true;
+
+	if (($arg["noweHaslo"]<>"") && ($arg["noweHaslo"]==$arg["noweHaslo"]))
+	{
+		$sql = $conn->prepare("UPDATE pracownicy SET hasloZakodowane=:noweHaslo WHERE idPracownika=:idPracownika");
+		$sql->bindValue(':idPracownika', $arg["idPracownika"], PDO::PARAM_INT); 
+		$sql->bindValue(':noweHaslo', ntPassword($arg["noweHaslo"]), PDO::PARAM_STR); 
+		$res=dbQuery($sql);
+		if($res["blad"]) $blad = true;
+	}
+	$sql = $conn->prepare("DELETE FROM dzialy_has_pracownicy WHERE idPracownika=:idPracownika");
+	$sql->bindValue(":idPracownika", $arg["idPracownika"], PDO::PARAM_INT);
+	$res=dbQuery($sql);
+	if($res["blad"]) $blad = true;
+	if (is_array($arg["dzial"]))
+//		while(list($klucz, $wartosc) = each($arg["dzial"]))
+		foreach($arg["dzial"] as $klucz=>$wartosc)
+		{
+//			echo "zapisz";
+			$sql = $conn->prepare("INSERT INTO dzialy_has_pracownicy VALUES (:idDzialu, :idPracownika, :dzialPodstawowy)");
+			$sql->bindValue(":idDzialu", $wartosc["idDzialu"], PDO::PARAM_INT);
+			$sql->bindValue(":idPracownika", $arg["idPracownika"], PDO::PARAM_INT);
+			$sql->bindValue(":dzialPodstawowy", $wartosc["dzialPodstawowy"], PDO::PARAM_INT);
+			$res=dbQuery($sql);
+			if($res["blad"]) $blad = true;
+		}
+	if($res["blad"])
+		$dane["id"] = 0;
+	else
+		$dane["id"]=$arg["idPracownika"];
+	return $dane;
+}

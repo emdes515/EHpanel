@@ -1,0 +1,182 @@
+html,body
+{
+	width:100%;
+	height:100%;
+	margin:0px;
+	overflow: hidden;
+	padding:0px;
+}
+#pasekZadan{
+	background-color:#eceeea;
+	color: #000000;
+	vertical-align: middle;
+	text-align: right;
+	margin-right: 10px;
+	width: 100%;
+}
+#pasekMenu{
+	background-color :#eceeea;
+	height: 30px;
+}
+.menuGlowne{
+	background-color :#eceeea;
+	height: 30px;
+}
+.jqx-notification-container {
+    z-index: 99999;
+}
+table, th, td {
+	border-collapse: collapse;
+	border: 0px solid black;
+}
+.podgladOpis{
+	background-color:#ccccca;
+	height: 30px;
+	width: 150px;
+	font-weight: bold;
+	padding-left:5px;
+}
+.podgladOpis2{
+	background-color:#ccccca;
+	height: 30px;
+	width: 138px;
+	font-weight: bold;
+	padding-left:5px;
+}
+.podgladOpis3{
+	background-color:#ccccca;
+	font-weight: bold;
+}
+.podgladWartosc{
+	background-color:#eceeea;
+	height: 30px;
+	width: 344px;
+	padding-left:5px;
+}
+.podgladNaglowek{
+	background-color:#ccccca;
+	height: 30px;
+	width: 500px;
+	text-align: center;
+}
+.bazaTypowStatusPlanowany{
+	background-color:#ffffff;
+}
+.bazaTypowStatusZatwierdzony{
+	background-color:#ffb5b5;
+}
+.bazaTypowStatusWprowadzony{
+	background-color:#b5ffb5;
+}
+.rcpStatusNiezatwierdzony{
+	color:#FFFFFF;
+	background-color: #728896;
+	font-weight: bold;
+}
+.rcpStatusZatwierdzony{
+	color:#FFFFFF;
+	background-color:#a51238;
+	font-weight: bold;
+}
+.rcpStatusIFS{
+	color:#FFFFFF;
+	background-color:#8aa311;
+	font-weight: bold;
+}
+.kalendarzNadgodziny
+{
+	background-color:#A51238;
+	color: #ffffff;
+	font-size:12px;
+	width: 52px;
+	float:left;
+}
+.kalendarzGodzinyCzarne
+{
+	background-color:#000000;
+	color: #ffffff;
+	width: 52px;
+	float:left;
+}
+.kalendarzGodzinyNieatwierdzone
+{
+	background-color:#728896;
+	color: #FFFFFF;
+	font-size:12px;
+	width: 53px;
+	float:left;
+}
+.kalendarzNrDnia
+{
+	background-color:#CCCCCC;
+	font-size:12px;
+	margin: 0px;
+	padding: 0px;
+	width:157px;
+}
+.kalendarzNadgodzinyLegenda
+{
+	background-color:#A51238;
+	color: #ffffff;
+	padding: 5px;
+	float:left;
+}
+.kalendarzGodzinyCzarneLegenda
+{
+	background-color:#000000;
+	color: #ffffff;
+	padding: 5px;
+	float:left;
+}
+.kalendarzGodzinyNiezatwierdzoneLegenda
+{
+	background-color:#728896;
+	color: #ffffff;
+	padding: 5px;
+	float:left;
+}
+.przegladRaportowCzasPracyNaglowekFiltra
+{
+	background-color:#EEEEEE;
+	text-align:center;
+	padding:3px;
+	width:300px;
+	font-weight: bold;
+}
+.przekreslenie
+{
+	text-decoration: line-through;
+}
+.epoWygrano
+{
+	background-color:#b9f6ca;
+}
+.epoNieWygrano
+{
+	background-color:#ff8a80;
+}
+.epoAnulowano
+{
+	background-color:#9e9e9e;
+	text-decoration: line-through;
+}
+.dropdownlistArrowepoSpolka
+{
+	height:20px !important;
+}
+.dropdownlistArrowepoOdbiorca
+{
+	height:20px !important;
+}
+.dropdownlistArrowepoRuch
+{
+	height:20px !important;
+}
+.dropdownlistArrowepoZamawiajacy
+{
+	height:20px !important;
+}
+#jqx-combobox-input
+{
+	width:200px !important;
+}
