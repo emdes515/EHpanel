@@ -5,13 +5,19 @@
 	var sourcePracownicyLista = {
 		datatype: 'json',
 		datafields: [{ name: 'idPracownika' }, { name: 'nazwiskoImie' }],
-		url: urlPracownicyLista,
+		localdata: [
+			...[{ idPracownika: 0, nazwiskoImie: 'Dodaj pracownika' }],
+			...wczytajDane('php/index.php?modul=pracownicy&funkcja=lista'),
+		],
 		async: false,
 	}
+
+	console.log(sourcePracownicyLista)
 
 	var dataAdapterPracownicyLista = new $.jqx.dataAdapter(sourcePracownicyLista)
 
 	console.log(dataAdapterPracownicyLista)
+
 	$('#pracownicyPracownik').jqxComboBox({
 		width: 300,
 		height: 20,
@@ -19,6 +25,8 @@
 		source: dataAdapterPracownicyLista,
 		displayMember: 'nazwiskoImie',
 		valueMember: 'idPracownika',
+		autoComplete: true,
+		searchMode: 'containsignorecase',
 		theme: theme,
 	})
 	$('#pracownicyImie').jqxInput({
@@ -206,43 +214,52 @@
 		var dane = {}
 		var args = event.args
 		var item = args.item
+
 		if (item) {
-			idPracownika = item.value
-			idDzialu = 0
-			dane['modul'] = 'pracownicy'
-			dane['funkcja'] = 'formularz'
-			dane['idPracownika'] = item.value
+			// dodawanie nowego pracownika
+			console.log(item.value)
+			if (item.value == 0) {
+				dane['modul'] = 'pracownicy'
+				dane['funkcja'] = 'dodaj'
 
-			daneJSON = wczytajDane(urlPracownicyLista, dane)
+				console.log('Dodawanie')
+				daneJSON = wczytajDane('php/index.php', dane)
+			} else {
+				idPracownika = item.value
+				idDzialu = 0
+				dane['modul'] = 'pracownicy'
+				dane['funkcja'] = 'formularz'
+				dane['idPracownika'] = item.value
 
-			console.log(daneJSON['imie'])
+				daneJSON = wczytajDane('php/index.php', dane)
 
-			$('#pracownicyImie').val(daneJSON['imie'])
-			$('#pracownicyNazwisko').val(daneJSON['nazwisko'])
-			$('#pracownicyProxNetId').val(daneJSON['proxNetId'])
-			$('#pracownicyNrIFS').val(daneJSON['nrIFS'])
-			$('#pracownicySambaLogin').val(daneJSON['sambaLogin'])
-			$('#pracownicyEmail').val(daneJSON['email'])
-			$('#pracownicyEmailEH').val(daneJSON['emailEH'])
-			if (daneJSON['wyslacPowiadomieniaZleceniaWewnetrznego'] == 1)
-				$('#pracownicyWyslacPowiadomieniaZleceniaWewnetrznego').jqxCheckBox('check')
-			else $('#pracownicyWyslacPowiadomieniaZleceniaWewnetrznego').jqxCheckBox('uncheck')
-			if (daneJSON['wyslacPasek'] == 1) $('#pracownicyWyslacPasek').jqxCheckBox('check')
-			else $('#pracownicyWyslacPasek').jqxCheckBox('uncheck')
-			$('#pracownicyNoweHaslo').val('')
-			$('#pracownicyPowtorzNoweHaslo').val('')
-			$('#pracownicyEtat').val(daneJSON['etat'])
-			if (daneJSON['kierownik'] == 1) $('#pracownicyKierownik').jqxCheckBox('check')
-			else $('#pracownicyKierownik').jqxCheckBox('uncheck')
-			if (daneJSON['widoczny'] == 1) $('#pracownicyWidoczny').jqxCheckBox('check')
-			else $('#pracownicyWidoczny').jqxCheckBox('uncheck')
-			$('#pracownicyDzialDrzewo').jqxTree('uncheckAll')
-			var items = $('#pracownicyDzialDrzewo').jqxTree('getItems')
-			$.each(daneJSON['dzial'], function (klucz, wartosc) {
-				$('#pracownicyDzialDrzewo').jqxTree('checkItem', $('#' + wartosc.idDzialu)[0], true)
-				if (wartosc.dzialPodstawowy == '1')
-					$('#pracownicyDzialDrzewo').jqxTree('selectItem', $('#' + wartosc.idDzialu)[0])
-			})
+				$('#pracownicyImie').val(daneJSON['imie'])
+				$('#pracownicyNazwisko').val(daneJSON['nazwisko'])
+				$('#pracownicyProxNetId').val(daneJSON['proxNetId'])
+				$('#pracownicyNrIFS').val(daneJSON['nrIFS'])
+				$('#pracownicySambaLogin').val(daneJSON['sambaLogin'])
+				$('#pracownicyEmail').val(daneJSON['email'])
+				$('#pracownicyEmailEH').val(daneJSON['emailEH'])
+				if (daneJSON['wyslacPowiadomieniaZleceniaWewnetrznego'] == 1)
+					$('#pracownicyWyslacPowiadomieniaZleceniaWewnetrznego').jqxCheckBox('check')
+				else $('#pracownicyWyslacPowiadomieniaZleceniaWewnetrznego').jqxCheckBox('uncheck')
+				if (daneJSON['wyslacPasek'] == 1) $('#pracownicyWyslacPasek').jqxCheckBox('check')
+				else $('#pracownicyWyslacPasek').jqxCheckBox('uncheck')
+				$('#pracownicyNoweHaslo').val('')
+				$('#pracownicyPowtorzNoweHaslo').val('')
+				$('#pracownicyEtat').val(daneJSON['etat'])
+				if (daneJSON['kierownik'] == 1) $('#pracownicyKierownik').jqxCheckBox('check')
+				else $('#pracownicyKierownik').jqxCheckBox('uncheck')
+				if (daneJSON['widoczny'] == 1) $('#pracownicyWidoczny').jqxCheckBox('check')
+				else $('#pracownicyWidoczny').jqxCheckBox('uncheck')
+				$('#pracownicyDzialDrzewo').jqxTree('uncheckAll')
+				var items = $('#pracownicyDzialDrzewo').jqxTree('getItems')
+				$.each(daneJSON['dzial'], function (klucz, wartosc) {
+					$('#pracownicyDzialDrzewo').jqxTree('checkItem', $('#' + wartosc.idDzialu)[0], true)
+					if (wartosc.dzialPodstawowy == '1')
+						$('#pracownicyDzialDrzewo').jqxTree('selectItem', $('#' + wartosc.idDzialu)[0])
+				})
+			}
 		}
 	})
 	$('#pracownicyEdycjaZapisz')
@@ -278,11 +295,18 @@
 					i++
 				})
 				dane['dzial'] = dzial
+
 				dane['widoczny'] = Number($('#pracownicyWidoczny').val())
-				dane['modul'] = 'pracownicy'
-				dane['funkcja'] = 'zapisz'
+				if (dane['idPracownika'] == 0) {
+					dane['modul'] = 'pracownicy'
+					dane['funkcja'] = 'dodaj'
+				} else {
+					dane['modul'] = 'pracownicy'
+					dane['funkcja'] = 'zapisz'
+				}
+
 				daneJSON = wczytajDane('php/index.php', dane)
-				var id = daneJSON['id']
+				var id = daneJSON['idPracownika']
 				if (id > 0) {
 					pokazKomunikat('ok', komunikaty['pracownicyDodanie'])
 					$('#pracownicyPracownik').jqxComboBox('selectIndex', -1)
@@ -314,7 +338,7 @@
 				action: 'change',
 				rule: function () {
 					var idPracownika = $('#pracownicyPracownik').val()
-					if (idPracownika > 0) return true
+					if (idPracownika >= 0) return true
 					else return false
 				},
 			},
