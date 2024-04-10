@@ -124,22 +124,22 @@ class pracownicy
 		$sql->bindValue(":idPracownika", $this->arg["idPracownika"], PDO::PARAM_INT);
 		$res = $this->dbQuery($sql);
 		if ($res["blad"]) $blad = true;
-		//if (is_array($this->arg["dzial"]))
-		//		while(list($klucz, $wartosc) = each($arg["dzial"]))
-		//foreach ($this->arg["dzial"] as $klucz => $wartosc) {
-		//			echo "zapisz";
-		//$sql = $this->conn->prepare("INSERT INTO dzialy_has_pracownicy VALUES (:idDzialu, :idPracownika, :dzialPodstawowy)");
-		//	$sql->bindValue(":idDzialu", $wartosc["idDzialu"], PDO::PARAM_INT);
-		//	$sql->bindValue(":idPracownika", $this->arg["idPracownika"], PDO::PARAM_INT);
-		//	$sql->bindValue(":dzialPodstawowy", $wartosc["dzialPodstawowy"], PDO::PARAM_INT);
-		//	$res = $this->dbQuery($sql);
-		if ($res["blad"]) $blad = true;
+		if (is_array($this->arg["dzial"]))
+			//		while(list($klucz, $wartosc) = each($arg["dzial"]))
+			foreach ($this->arg["dzial"] as $klucz => $wartosc) {
+				//			echo "zapisz";
+				$sql = $this->conn->prepare("INSERT INTO dzialy_has_pracownicy VALUES (:idDzialu, :idPracownika, :dzialPodstawowy)");
+				$sql->bindValue(":idDzialu", $wartosc["idDzialu"], PDO::PARAM_INT);
+				$sql->bindValue(":idPracownika", $this->arg["idPracownika"], PDO::PARAM_INT);
+				$sql->bindValue(":dzialPodstawowy", $wartosc["dzialPodstawowy"], PDO::PARAM_INT);
+				$res = $this->dbQuery($sql);
+				if ($res["blad"]) $blad = true;
 
-		if ($res["blad"])
-			$dane["idPracownika"] = 0;
-		else
-			$dane["idPracownika"] = $this->arg["idPracownika"];
-
+				if ($res["blad"])
+					$dane["idPracownika"] = 0;
+				else
+					$dane["idPracownika"] = $this->arg["idPracownika"];
+			}
 		$this->dane = $dane;
 	}
 
@@ -153,8 +153,6 @@ class pracownicy
 		if ($this->arg["email"] == "")
 			$this->arg["wyslacPasek"] = 0;
 
-		echo json_encode($this->arg["imie"]);
-
 		$sql = $this->conn->prepare("INSERT INTO pracownicy 
 		(proxNetId, nrIFS, imie, nazwisko, sambaLogin, email, wyslacPasek, etat, kierownik, widoczny, emailEH, wyslacPowiadomieniaZleceniaWewnetrznego, hasloZakodowane)
 		VALUES
@@ -166,6 +164,7 @@ class pracownicy
 		$sql->bindValue(":nrIFS", $this->arg["nrIFS"], PDO::PARAM_STR);
 		$sql->bindValue(":imie", $this->arg["imie"], PDO::PARAM_STR);
 		$sql->bindValue(":nazwisko", $this->arg["nazwisko"], PDO::PARAM_STR);
+		if (trim($this->arg["nrIFS"]) == "") $this->arg["nrIFS"] = null;
 		$sql->bindValue(":sambaLogin", $this->arg["sambaLogin"], PDO::PARAM_STR);
 		$sql->bindValue(":email", $this->arg["email"], PDO::PARAM_STR);
 		$sql->bindValue(":wyslacPasek", $this->arg["wyslacPasek"], PDO::PARAM_INT);
@@ -175,8 +174,36 @@ class pracownicy
 		$sql->bindValue(":emailEH", $this->arg["emailEH"], PDO::PARAM_STR);
 		$sql->bindValue(":wyslacPowiadomieniaZleceniaWewnetrznego", $this->arg["wyslacPowiadomieniaZleceniaWewnetrznego"], PDO::PARAM_STR);
 		$sql->bindValue(':hasloZakodowane', hash($algrotytmHashowania, $this->arg["noweHaslo"]), PDO::PARAM_STR);
-
 		$res = $this->dbQuery($sql);
+		echo $res["blad"];
+		if ($res["blad"]) {
+			$blad = true;
+			return $res["blad"];
+		}
+
+
+		$sql = $this->conn->prepare("SELECT idPracownika FROM pracownicy ORDER BY idPracownika DESC LIMIT 1");
+		$res = $this->dbQuery($sql);
+
+		echo $this->arg['idPracownika'] = $res['wynik']->fetch(PDO::FETCH_ASSOC)['idPracownika'];
+
+		if (is_array($this->arg["dzial"]))
+			//		while(list($klucz, $wartosc) = each($arg["dzial"]))
+			foreach ($this->arg["dzial"] as $klucz => $wartosc) {
+				//			echo "zapisz";
+				$sql = $this->conn->prepare("INSERT INTO dzialy_has_pracownicy VALUES (:idDzialu, :idPracownika, :dzialPodstawowy)");
+				$sql->bindValue(":idDzialu", $wartosc["idDzialu"], PDO::PARAM_INT);
+				$sql->bindValue(":idPracownika", $this->arg["idPracownika"], PDO::PARAM_INT);
+				$sql->bindValue(":dzialPodstawowy", $wartosc["dzialPodstawowy"], PDO::PARAM_INT);
+				$res = $this->dbQuery($sql);
+				if ($res["blad"]) $blad = true;
+
+				if ($res["blad"])
+					$dane["idPracownika"] = 0;
+				else
+					$dane["idPracownika"] = $this->arg["idPracownika"];
+			}
+
 
 		$dane = $this->arg;
 

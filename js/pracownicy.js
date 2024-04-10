@@ -7,7 +7,7 @@
 		datafields: [{ name: 'idPracownika' }, { name: 'nazwiskoImie' }],
 		localdata: [
 			...[{ idPracownika: 0, nazwiskoImie: 'Dodaj pracownika' }],
-			...wczytajDane('php/index.php?modul=pracownicy&funkcja=lista'),
+			...wczytajDane(urlPracownicyLista),
 		],
 		async: false,
 	};
@@ -29,7 +29,7 @@
 		theme: theme,
 	});
 	$('#pracownicyPracownik').jqxComboBox('getItem', 0).html =
-		'<div style="text-align: center; backgroud: blue; font-weight: bold; background-color: orange; padding: 8px;">Dodaj pracownika</div>';
+		'<div style="text-align: center; backgroud: blue; font-weight: bold; padding: 8px;">Dodaj pracownika</div>';
 	$('#pracownicyImie').jqxInput({
 		width: 300,
 		height: 20,
@@ -183,6 +183,7 @@
 	$('#pracownicyDzialDrzewo').on('select', function (event) {
 		$('#pracownicyDzial').jqxDropDownButton('close');
 		var dzialyZaznaczone = [];
+		console.log(dzialyZaznaczone);
 		var dzialy = $('#pracownicyDzialDrzewo').jqxTree('getCheckedItems');
 		for (var i = 0; i < dzialy.length; i++) {
 			if (dzialy[i].selected) dzialyZaznaczone.push('<b>' + dzialy[i].label + '</b>');
@@ -218,7 +219,6 @@
 
 		if (item) {
 			// dodawanie nowego pracownika
-			console.log(item.value);
 			if (item.value == 0) {
 				dane['modul'] = 'pracownicy';
 				dane['funkcja'] = 'dodaj';
@@ -278,6 +278,9 @@
 				});
 			}
 		}
+	});
+	$('#pracownicyPracownik').on('click', function () {
+		$('#pracownicyPracownik').val('');
 	});
 	$('#pracownicyEdycjaZapisz')
 		.off()
