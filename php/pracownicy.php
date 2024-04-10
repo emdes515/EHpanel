@@ -47,7 +47,6 @@ class pracownicy
 		}
 
 		$this->dane = $dane;
-		$this->dane;
 	}
 
 	public function formularz()
@@ -137,10 +136,11 @@ class pracownicy
 		if ($res["blad"]) $blad = true;
 
 		if ($res["blad"])
-			$dane["id"] = 0;
+			$dane["idPracownika"] = 0;
 		else
-			$dane["id"] = $this->arg["idPracownika"];
-		$this->dane;
+			$dane["idPracownika"] = $this->arg["idPracownika"];
+
+		$this->dane = $dane;
 	}
 
 	public function dodaj()
@@ -148,18 +148,19 @@ class pracownicy
 		$dane = array();
 		$blad = false;
 
-		$algrotytmHashowania = 'sha256';
-
-		echo json_encode($this->arg);
+		$algrotytmHashowania = 'MD5';
 
 		if ($this->arg["email"] == "")
 			$this->arg["wyslacPasek"] = 0;
 
 		echo json_encode($this->arg["imie"]);
 
-		$sql = $this->conn->prepare("INSERT INTO pracownicy (proxNetId, nrIFS, imie, nazwisko, email, wyslacPasek, etat, kierownik, widoczny, emailEH, wyslacPowiadomienia ,wyslacPowiadomieniaZleceniaWewnetrznego, hasloZakodowane) 
-		VALUES (:proxNetId, :nrIFS, :imie, :nazwisko, :email, :wyslacPasek, :etat, :kierownik, :widoczny, :emailEH, :wyslacPowiadomienia, :wyslacPowiadomieniaZleceniaWewnetrznego, :noweHaslo)");
+		$sql = $this->conn->prepare("INSERT INTO pracownicy 
+		(proxNetId, nrIFS, imie, nazwisko, sambaLogin, email, wyslacPasek, etat, kierownik, widoczny, emailEH, wyslacPowiadomieniaZleceniaWewnetrznego, hasloZakodowane)
+		VALUES
+		(:proxNetId, :nrIFS, :imie, :nazwisko, :sambaLogin, :email, :wyslacPasek, :etat, :kierownik, :widoczny, :emailEH, :wyslacPowiadomieniaZleceniaWewnetrznego, :hasloZakodowane)");
 
+		if (trim($this->arg["proxNetId"]) == "") $this->arg["proxNetId"] = null;
 		$sql->bindValue(":proxNetId", $this->arg["proxNetId"], PDO::PARAM_STR);
 		if (trim($this->arg["nrIFS"]) == "") $this->arg["nrIFS"] = null;
 		$sql->bindValue(":nrIFS", $this->arg["nrIFS"], PDO::PARAM_STR);
@@ -173,12 +174,13 @@ class pracownicy
 		$sql->bindValue(":widoczny", $this->arg["widoczny"], PDO::PARAM_INT);
 		$sql->bindValue(":emailEH", $this->arg["emailEH"], PDO::PARAM_STR);
 		$sql->bindValue(":wyslacPowiadomieniaZleceniaWewnetrznego", $this->arg["wyslacPowiadomieniaZleceniaWewnetrznego"], PDO::PARAM_STR);
-		$sql->bindValue(':noweHaslo', hash($algrotytmHashowania, $this->arg["noweHaslo"]), PDO::PARAM_STR);
+		$sql->bindValue(':hasloZakodowane', hash($algrotytmHashowania, $this->arg["noweHaslo"]), PDO::PARAM_STR);
 
 		$res = $this->dbQuery($sql);
 
-		//echo json_encode($this->arg);
-		$this->dane;
+		$dane = $this->arg;
+
+		$this->dane = $dane;
 	}
 }
 
