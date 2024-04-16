@@ -12,7 +12,6 @@ class pracownicy
 	{
 		$this->arg = $arg;
 		$this->dbconnect();
-		$funkcja = (string)$arg["funkcja"];
 	}
 
 	public function wyniki()
@@ -145,10 +144,11 @@ class pracownicy
 
 	public function dodaj()
 	{
+
 		$dane = array();
 		$blad = false;
 
-		$algrotytmHashowania = 'MD5';
+		$algrotytmHashowania = 'sha256';
 
 		if ($this->arg["email"] == "")
 			$this->arg["wyslacPasek"] = 0;
@@ -175,19 +175,21 @@ class pracownicy
 		$sql->bindValue(":wyslacPowiadomieniaZleceniaWewnetrznego", $this->arg["wyslacPowiadomieniaZleceniaWewnetrznego"], PDO::PARAM_STR);
 		$sql->bindValue(':hasloZakodowane', hash($algrotytmHashowania, $this->arg["noweHaslo"]), PDO::PARAM_STR);
 		$res = $this->dbQuery($sql);
-		echo $res["blad"];
+
 		if ($res["blad"]) {
-			$blad = true;
-			return $res["blad"];
-		}
+			$dane["idPracownika"] = null;
+			$dane["blad"] = true;
+		} else
+			$dane["idPracownika"] = $this->arg["idPracownika"];
+
 
 
 		$sql = $this->conn->prepare("SELECT idPracownika FROM pracownicy ORDER BY idPracownika DESC LIMIT 1");
 		$res = $this->dbQuery($sql);
 
-		echo $this->arg['idPracownika'] = $res['wynik']->fetch(PDO::FETCH_ASSOC)['idPracownika'];
+		//echo $this->arg['idPracownika'] = $res['wynik']->fetch(PDO::FETCH_ASSOC)['idPracownika'];
 
-		if (is_array($this->arg["dzial"]))
+		if (array_key_exists('dzial', $this->arg))
 			//		while(list($klucz, $wartosc) = each($arg["dzial"]))
 			foreach ($this->arg["dzial"] as $klucz => $wartosc) {
 				//			echo "zapisz";
@@ -196,16 +198,13 @@ class pracownicy
 				$sql->bindValue(":idPracownika", $this->arg["idPracownika"], PDO::PARAM_INT);
 				$sql->bindValue(":dzialPodstawowy", $wartosc["dzialPodstawowy"], PDO::PARAM_INT);
 				$res = $this->dbQuery($sql);
-				if ($res["blad"]) $blad = true;
 
-				if ($res["blad"])
-					$dane["idPracownika"] = 0;
-				else
+				if ($res["blad"]) {
+					$dane["idPracownika"] = null;
+					$dane["blad"] = true;
+				} else
 					$dane["idPracownika"] = $this->arg["idPracownika"];
 			}
-
-
-		$dane = $this->arg;
 
 		$this->dane = $dane;
 	}

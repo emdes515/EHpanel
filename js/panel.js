@@ -5,23 +5,23 @@ function przygotowanie() {
 		theme: theme,
 		autoCloseDelay: 3000,
 		opacity: 1,
-	})
+	});
 }
 function pokazKomunikat(typKomunikatu, komunikat) {
 	switch (typKomunikatu) {
 		case 'error':
-			$('#komunikaty').jqxNotification({ template: 'error' })
-			break
+			$('#komunikaty').jqxNotification({ template: 'error' });
+			break;
 		case 'ok':
-			$('#komunikaty').jqxNotification({ template: 'success' })
-			break
+			$('#komunikaty').jqxNotification({ template: 'success' });
+			break;
 	}
 
-	$('#komunikatTekst').html(komunikat)
-	$('#komunikaty').jqxNotification('open')
+	$('#komunikatTekst').html(komunikat);
+	$('#komunikaty').jqxNotification('open');
 }
 function wczytajDane(url, dane) {
-	var dane
+	var dane;
 	$.ajax({
 		method: 'POST',
 		dataType: 'json',
@@ -30,18 +30,16 @@ function wczytajDane(url, dane) {
 		timeout: 10000,
 		async: false,
 		success: function (data) {
-			dane = data
-			//			log(dane);
-			console.log(dane)
+			dane = data;
 		},
 		error: function (e) {
-			log('json error: ' + e.message)
+			log('json error: ' + e.responseText);
 		},
-	})
-	return dane
+	});
+	return dane;
 }
 function wczytajDane2(url, dane) {
-	var dane
+	var dane;
 	$.ajax({
 		method: 'POST',
 		dataType: 'json',
@@ -53,30 +51,30 @@ function wczytajDane2(url, dane) {
 		processData: false,
 		crossDomain: true,
 		success: function (data) {
-			dane = data
-			log(dane)
+			dane = data;
 		},
 		error: function (e) {
-			log('json error: ' + e.message)
+			log('json error: ' + e.message);
 		},
-	})
-	return dane
+	});
+	return dane;
 }
+
 function sprawdzUprawnienia(uprawnienie) {
-	var dane = {}
-	dane['modul'] = 'logowanie'
-	dane['funkcja'] = 'sprawdzUprawnienia'
-	dane['uprawnienie'] = uprawnienie
-	daneJSON = wczytajDane('php/index.php', dane)
-	return daneJSON['wynik']
+	var dane = {};
+	dane['modul'] = 'logowanie';
+	dane['funkcja'] = 'sprawdzUprawnienia';
+	dane['uprawnienie'] = uprawnienie;
+	daneJSON = wczytajDane('php/index.php', dane);
+	return daneJSON['wynik'];
 }
 function idPracownika() {
-	var dane = {}
-	dane['modul'] = 'logowanie'
-	dane['funkcja'] = 'idPracownika'
-	daneJSON = wczytajDane('php/index.php', dane)
-	return daneJSON['wynik']
+	var dane = {};
+	dane['modul'] = 'logowanie';
+	dane['funkcja'] = 'idPracownika';
+	daneJSON = wczytajDane('php/index.php', dane);
+	return daneJSON['wynik'];
 }
 function log(tekst) {
-	console.log(tekst)
+	console.log(tekst);
 }

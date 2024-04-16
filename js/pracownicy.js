@@ -12,8 +12,6 @@
 		async: false,
 	};
 
-	console.log(sourcePracownicyLista);
-
 	var dataAdapterPracownicyLista = new $.jqx.dataAdapter(sourcePracownicyLista);
 
 	$('#pracownicyPracownik').jqxComboBox({
@@ -315,11 +313,11 @@
 					i++;
 				});
 				dane['dzial'] = dzial;
-
 				dane['widoczny'] = Number($('#pracownicyWidoczny').val());
 				if (dane['idPracownika'] == 0) {
 					dane['modul'] = 'pracownicy';
 					dane['funkcja'] = 'dodaj';
+					dane['idPracownika'] = null;
 				} else {
 					dane['modul'] = 'pracownicy';
 					dane['funkcja'] = 'zapisz';
@@ -328,7 +326,7 @@
 				daneJSON = wczytajDane('php/index.php', dane);
 				var id = daneJSON['idPracownika'];
 
-				if (id >= 0) {
+				if (id >= 0 && id != null) {
 					id === 0
 						? pokazKomunikat('ok', komunikaty['pracownicyNowyDodanie'])
 						: pokazKomunikat('ok', komunikaty['pracownicyDodanie']);
@@ -348,6 +346,24 @@
 					$('#pracownicyKierownik').jqxCheckBox('uncheck');
 					$('#pracownicyWidoczny').jqxCheckBox('uncheck');
 					$('#pracownicyDzialDrzewo').jqxTree('uncheckAll');
+
+					var sourcePracownicyLista = {
+						datatype: 'json',
+						datafields: [{ name: 'idPracownika' }, { name: 'nazwiskoImie' }],
+						localdata: [
+							...[{ idPracownika: 0, nazwiskoImie: 'Dodaj pracownika' }],
+							...wczytajDane(urlPracownicyLista),
+						],
+						async: false,
+					};
+
+					var dataAdapterPracownicyLista = new $.jqx.dataAdapter(sourcePracownicyLista);
+
+					$('#pracownicyPracownik').jqxComboBox({
+						source: dataAdapterPracownicyLista,
+					});
+
+					$('#pracownicyPracownik').jqxComboBox('refresh');
 				} else {
 					pokazKomunikat('blad', komunikaty['pracownicyDodanieBlad']);
 				}
