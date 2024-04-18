@@ -28,9 +28,22 @@ $('#wyloguj').click(function () {
 	}
 });
 
-$('#menuGlowneUstawieniaZleceniaWewnetrzne').click(function () {
-	$('#pulpit').load('html/dashboardZleceniaWewnetrzne.html');
-	zamknijMenu();
+$('#dashboardZleceniaWewnetrzne').click(function () {
+	const daneJSON = wczytajDane('php/index.php', {
+		modul: 'dashboardZleceniaWewnetrzne',
+		funkcja: 'wczytaj',
+		idPracownika: wczytajDane('php/index.php', {
+			modul: 'logowanie',
+			funkcja: 'getIdPracownika',
+		}).wynik,
+	});
+
+	if (daneJSON['menu_zleceniaWewnetrzne'].menu_zleceniaWewnetrzne) {
+		$('#pulpit').load('html/dashboardZleceniaWewnetrzne.html');
+		zamknijMenu();
+	} else {
+		pokazKomunikat('blad', komunikaty['menuBrakUprawnienDoModuluUstawieniaZleceniaWewnetrzne']);
+	}
 });
 
 let dane = {};

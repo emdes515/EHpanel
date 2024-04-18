@@ -12,7 +12,7 @@ class main
 		session_start();
 		$dane = array();
 		date_default_timezone_set("Europe/Warsaw");
-		//header('Content-type: application/json; charset=utf-8');
+		header('Content-type: application/json; charset=utf-8');
 	}
 	public function start()
 	{
