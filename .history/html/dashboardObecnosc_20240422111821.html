@@ -1,0 +1,67 @@
+<style>
+		.main {
+			width: 70%;
+			height: 40%;
+			border: 2px solid black;
+			display: flex;
+			flex-direction: column;
+			font-size: 15px;
+			max-width: 1000px;
+			min-width: 720px;
+			min-height: 300px;
+		}
+
+		.inputContainer {
+			margin: 20px;
+			align-self: center;
+			width: 50%;
+			height: 10%;
+		}
+
+		.info {
+			margin: 10px;
+		}
+
+		@media (max-width: 700px) {
+			.inputContainer {
+				width: 90%;
+			}
+		}
+	}
+</style>
+
+<div class="main">
+	<div class="inputContainer">
+		<input
+			id="dashboardObecnoscInput"
+			name="dashboardObecnoscInput" />
+	</div>
+
+	<div class="info">
+		<div>
+			<h2>Jan Kowalski</h2>
+		</div>
+		<div>
+			<div><span class="fw-bold text-primary">Status: </span> <span>Jest dostępny</span></div>
+			<div><span class="fw-bold text-primary">Dział: </span> <span>EH</span></div>
+			<div><span class="fw-bold text-primary">E-mail: </span> <span>jankowalski@test.pl</span></div>
+			<div>
+				<span class="fw-bold text-primary">Nr tel. wewnętrzny: </span>
+				<span>+48 32 249 94 80 wew. 580</span>
+			</div>
+			<div>
+				<span class="fw-bold text-primary">Nr tel. służbowy: </span> <span>+48 900 900 898</span>
+			</div>
+			<div>
+				<span class="fw-bold text-primary">Nr tel. służbowy: </span> <span>+48 900 900 898</span>
+			</div>
+			<div>
+				<span class="fw-bold text-primary">Przełożony: </span> <span>MATEUSZ JANKOWSKI</span>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script
+	type="text/javascript"
+	src="js/dashboardObecnosc.js"></script>

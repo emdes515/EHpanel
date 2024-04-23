@@ -1,0 +1,147 @@
+<link rel="stylesheet" href="css/panel.css" type="text/css" />
+<div id="oknoEwidencjaPostepowanOfertowych" style="width:800px; height:390px;">
+	<div>
+		<span>Ewidencja postepowań ofertowych</span>
+	</div>
+	<div style=" overflow-y: hidden; overflow-x: hidden;">
+		<div id="ewidencjaPostepowanOfertowychTablica"></div>
+	</div>
+</div>
+<div id="oknoEwidencjaPostepowanOfertowychDodanieEdycja">
+	<div>Dodanie / edycja ewidencji postepowań ofertowych</div>
+	<div style=" overflow-y: auto; overflow-x: hidden;">
+		<form id="oknoEwidencjaPostepowanOfertowychEdycjaFormularz" action="javascript: return false;">
+			<input type="hidden" id="epoId">
+			<table>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Szybka ścieżka</td>
+					<td class="podgladWartosc"><input type="text" id="epoSzybkaSciezka"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Ilość wniosków szybkiej ścieżki</td>
+					<td class="podgladWartosc"><div id="epoIloscWnioskowSzybkiejSciezki"></div></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Państwo</td>
+					<td class="podgladWartosc"><div id="epoPanstwo"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Spółka</td>
+					<td class="podgladWartosc"><div id="epoSpolka" style="min-width: 25px;"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Odbiorca (Zamawiający)</td>
+					<td class="podgladWartosc"><div id="epoOdbiorca"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Ruch</td>
+					<td class="podgladWartosc"><div id="epoRuch"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Przez (Zamawiający)</td>
+					<td class="podgladWartosc"><div id="epoZamawiajacy"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Nazwa pliku</td>
+					<td class="podgladWartosc"><table id="epoNazwaPlikuFormularz"><tr><td><div id="epoNazwaPlikuPrzedrostek"/></td><td>xxx-</td><td><div id="epoNazwaPlikuRok"/></td></tr></table><table id="epoNazwaPlikuWartosc"><tr><td><span id="epoNazwaPlikuWartoscTekst"></span></td></tr></table></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Numer projektu</td>
+					<td class="podgladWartosc"><div id="epoNrProjektu" style="float:left"/><div id="epoNrProjektuZakonczone"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Numer postępowania</td>
+					<td class="podgladWartosc"><input type="text" id="epoNrPostepowania"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Data złożenia oferty</td>
+					<td class="podgladWartosc"><div id="epoDataZlozeniaOferty"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Temat oferty</td>
+					<td class="podgladWartosc"><textarea id="epoTematOferty"></textarea></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Prowadzący</td>
+					<td class="podgladWartosc"><div id="epoProwadzacy"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Kwota oferty</td>
+					<td class="podgladWartosc"><table><tr><td><input type="text" id="epoKwotaOferty"/></td><td><div id="epoKwotaOfertyWaluta"/></td></tr></table></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Kwota kontraktu</td>
+					<td class="podgladWartosc"><table><tr><td><input type="text" id="epoKwotaKontraktu"/></td><td><div id="epoKwotaKontraktuWaluta"/></td></tr></table></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Wartość wadium</td>
+					<td class="podgladWartosc"><table><tr><td><div id="epoWartoscWadiumSlownik"/></td><td> lub </td><td><input type="text" id="epoWartoscWadium"/></td><td><div id="epoWartoscWadiumWaluta"/></td></tr></table></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Rodzaj wadium</td>
+					<td class="podgladWartosc"><div id="epoRodzajWadium"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Data odbioru końcowego</td>
+					<td class="podgladWartosc"><div id="epoDataOdbioruKoncowego"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Data ważności oferty</td>
+					<td class="podgladWartosc"><div id="epoDataWaznosciOferty"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Oferta zabezpieczona ?</td>
+					<td class="podgladWartosc"><input type="text" id="epoBezpiecznaOferta"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Nr umowy lub zamówienia</td>
+					<td class="podgladWartosc"><input type="text" id="epoNrUmowyLubZamowienia"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Data dostawy</td>
+					<td class="podgladWartosc"><div id="epoDataDostawy"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Informacje</td>
+					<td class="podgladWartosc"><div id="epoInformacje"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Uzupełnienie informacji</td>
+					<td class="podgladWartosc"><textarea id="epoUzupelnienieInformacji"></textarea></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Data zakończenia przetargu</td>
+					<td class="podgladWartosc"><div id="epoDataZakonczeniaPrzetargu"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Priorytet</td>
+					<td class="podgladWartosc"><div id="epoPriorytet"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Proces w toku</td>
+					<td class="podgladWartosc"><div id="epoProcesWToku"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Zakończono</td>
+					<td class="podgladWartosc"><div id="epoZakonczono"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Wygrano</td>
+					<td class="podgladWartosc"><div id="epoWygrano"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Usunięto</td>
+					<td class="podgladWartosc"><div id="epoAnulowano"/></td>
+				</tr>
+				<tr>
+					<td class="podgladOpis" style="width:220px;">Najem</td>
+					<td class="podgladWartosc"><div id="epoWynajem"/></td>
+				</tr>
+				<tr>
+					<td colspan="2" style="text-align: center; padding-top:10px;"><input type="button" value="Zapisz" id="epoEdycjaZapisz" /></td>
+				</tr>
+			</table>
+		</form>
+	</div>
+</div>
+<script type="text/javascript" src="js/ewidencjaPostepowanOfertowych.js"></script>
